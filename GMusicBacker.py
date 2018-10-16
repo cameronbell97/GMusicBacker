@@ -78,6 +78,8 @@ def loggedinmenu():
     print("Retrieving playlists")
     playlists = api.get_all_user_playlist_contents()
     print("Retrieved " + playlists.__len__().__str__() + " playlists")
+    library = api.get_all_songs()
+    print("Retrieved library of " + library.__len__().__str__() + " songs")
 
     # Export Playlists #
     answer = 'z'
@@ -89,7 +91,7 @@ def loggedinmenu():
         if(answer == 'd'):
             displayPlaylists(playlists)
         if(answer == 'e'):
-            exportPlaylists(playlists)
+            exportPlaylists(playlists, library)
     # TODO remove the need to press enter
 
     if answer == 'x': # Exit
@@ -106,7 +108,7 @@ def displayPlaylists(playlists):
         print(" " + count.__str__() + " || " + playlist['name'] + " || " + playlist['tracks'].__len__().__str__() + " songs")
         count+=1
 
-def exportPlaylists(playlists):
+def exportPlaylists(playlists, library):
     # Get Current Filepath
     now = datetime.datetime.now()
     fpath = EXPORTDIR + '\\' + now.strftime("%Y-%m-%d %H.%M")
@@ -140,7 +142,14 @@ def exportPlaylists(playlists):
                     trackinfo = track['track']
                     file.write("\"" + trackinfo['artist'] + '\",\"' + trackinfo['album'] + '\",\"' + trackinfo['title'] + "\"\n")
                 else:
-                    file.write(track['trackId'] + "\n")
+                    match = False
+                    for libtrack in library:
+                        if libtrack['id'] == track['trackId']:
+                            file.write("\"" + libtrack['artist'] + '\",\"' + libtrack['album'] + '\",\"' + libtrack['title'] + "\"\n")
+                            match = True
+
+                    if not match:
+                        file.write(track['trackId'] + "\n")
 
             file.close()
     except IOError:
