@@ -134,24 +134,26 @@ def exportPlaylists(playlists, library):
             file = io.open(newfilename, 'w', encoding="utf-8")
 
             # Write header
-            file.write("artist,album,title\n")
+            file.write("title,artist,album\n")
 
             # Write tracks
             for track in playlist['tracks']:
                 if track['source'] == '2':
                     trackinfo = track['track']
-                    file.write("\"" + trackinfo['artist'] + '\",\"' + trackinfo['album'] + '\",\"' + trackinfo['title'] + "\"\n")
+                    file.write("\"" + trackinfo['title'] + '\",\"' + trackinfo['artist'] + '\",\"' + trackinfo['album'] + "\"\n")
                 else:
                     match = False
                     for libtrack in library:
                         if libtrack['id'] == track['trackId']:
-                            file.write("\"" + libtrack['artist'] + '\",\"' + libtrack['album'] + '\",\"' + libtrack['title'] + "\"\n")
+                            file.write("\"" + libtrack['title'] + '\",\"' + libtrack['artist'] + '\",\"' + libtrack['album'] + "\"\n")
                             match = True
 
                     if not match:
                         file.write(track['trackId'] + "\n")
 
             file.close()
+            print("Exported \"" + newfilename + "\"")
+        print("Done!")
     except IOError:
         print("Error creating file: \"" + newfilename + "\"")
         print("Closing program")
