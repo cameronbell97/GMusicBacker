@@ -1,9 +1,13 @@
 from gmusicapi import Mobileclient
 import re
 import os
+import io
+import datetime
 
 ## Define Variables ##
 FILENAME = 'user.acc'
+DEVICEID = 'F46D0454F13F'
+EXPORTDIR = "export"
 api = Mobileclient()
 
 ## Define Functions ##
@@ -30,11 +34,14 @@ def login(username, password):
     if api.login(username, password, Mobileclient.FROM_MAC_ADDRESS, 'en_NZ'):
         # On success
         print("Login Successful")
-        library = api.get_all_songs()
+        loggedinmenu()
         # TODO continue code when you figure out how to log in
     else:
         # On fail
+        print("Attempting login with: " + username + ' and Device ID: ' + DEVICEID)
+        loginDEVID(username, password)
         print("Login Unsuccessful")
+        print("If you get this error a lot, try visiting https://accounts.google.com/b/0/DisplayUnlockCaptcha")
         answer = 'z'
         while(answer != 'n' and answer != 't' and answer != 'x'):
             print(" Enter n to try a new login")
@@ -42,6 +49,7 @@ def login(username, password):
             print(" Enter x to exit")
             answer = input("> ")
         # TODO remove the need to press enter
+
         if answer == 'n': # New Login
             # Remove Login File
             try:
@@ -57,6 +65,93 @@ def login(username, password):
         else:
             print("An unexpected error occurred, closing program")
             quit()
+
+
+def loginDEVID(username, password):
+    if api.login(username, password, DEVICEID, 'en_NZ'):
+        print("Login Successful")
+        loggedinmenu()
+        quit()
+
+def loggedinmenu():
+    # Retrieve Playlists #
+    print("Retrieving playlists")
+    playlists = api.get_all_user_playlist_contents()
+    print("Retrieved " + playlists.__len__().__str__() + " playlists")
+
+    # Export Playlists #
+    answer = 'z'
+    while (answer != 'x'):
+        print(" Enter e to export all playlists")
+        print(" Enter d to display the playlists")
+        print(" Enter x to exit")
+        answer = input("> ")
+        if(answer == 'd'):
+            displayPlaylists(playlists)
+        if(answer == 'e'):
+            exportPlaylists(playlists)
+    # TODO remove the need to press enter
+
+    if answer == 'x': # Exit
+        quit()
+    else:
+        print("An unexpected error occurred, closing program")
+        quit()
+
+def displayPlaylists(playlists):
+    print("Playlists:")
+    print(" [#] || [Name] || [Length]")
+    count = 0
+    for playlist in playlists:
+        print(" " + count.__str__() + " || " + playlist['name'] + " || " + playlist['tracks'].__len__().__str__() + " songs")
+        count+=1
+
+def exportPlaylists(playlists):
+    # Get Current Filepath
+    now = datetime.datetime.now()
+    fpath = EXPORTDIR + '\\' + now.strftime("%Y-%m-%d %H.%M")
+
+    # Make Export Directory
+    try:
+        if not os.path.exists(EXPORTDIR):
+            os.makedirs(EXPORTDIR)
+
+        if not os.path.exists(fpath):
+            os.makedirs(fpath)
+    except IOError:
+        # If export directory string is invalid or directory already exists
+        print("Error making export directory, exiting")
+        quit()
+
+    try:
+        # Scrape Songs
+        for playlist in playlists:
+            # Make File
+            pname = cleanName(playlist['name'])
+            newfilename = fpath + "\\" + pname + ".csv"
+            file = io.open(newfilename, 'w', encoding="utf-8")
+
+            # Write header
+            file.write("artist,album,title\n")
+
+            # Write tracks
+            for track in playlist['tracks']:
+                if track['source'] == '2':
+                    trackinfo = track['track']
+                    file.write("\"" + trackinfo['artist'] + '\",\"' + trackinfo['album'] + '\",\"' + trackinfo['title'] + "\"\n")
+                else:
+                    file.write(track['trackId'] + "\n")
+
+            file.close()
+    except IOError:
+        print("Error creating file: \"" + newfilename + "\"")
+        print("Closing program")
+        quit()
+
+def cleanName(name):
+    return re.sub('[/\\:*?"<>|]', '', name).encode('ascii', 'ignore').decode("utf-8")
+    # translation_table = dict.fromkeys(map(ord, '!@#$'), None)
+    # return name.translate(translation_table)
 
 ## ------------------ MAIN ------------------ ##
 
