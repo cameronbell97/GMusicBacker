@@ -38,8 +38,6 @@ def login(username, password):
         # TODO continue code when you figure out how to log in
     else:
         # On fail
-        print("Attempting login with: " + username + ' and Device ID: ' + DEVICEID)
-        loginDEVID(username, password)
         print("Login Unsuccessful")
         print("If you get this error a lot, try visiting https://accounts.google.com/b/0/DisplayUnlockCaptcha")
         answer = 'z'
@@ -65,13 +63,6 @@ def login(username, password):
         else:
             print("An unexpected error occurred, closing program")
             quit()
-
-
-def loginDEVID(username, password):
-    if api.login(username, password, DEVICEID, 'en_NZ'):
-        print("Login Successful")
-        loggedinmenu()
-        quit()
 
 def loggedinmenu():
     # Retrieve Playlists #
