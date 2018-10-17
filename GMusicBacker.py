@@ -6,8 +6,12 @@ import datetime
 
 ## Define Variables ##
 FILENAME = 'user.acc'
-DEVICEID = 'F46D0454F13F'
 EXPORTDIR = "export"
+FORMAT = "TYPE1"
+    ## TYPE KEY ##
+    # Type 1 = [title],[artist],[album]  - Speech Marks around every field, no commas at end of line
+    # Type 2 = [artist],[album],[title]  - Speech Marks only around necessary fields
+    # Type 3 = [artist],[album],[title]  - Speech Marks around every field
 api = Mobileclient()
 
 ## Define Functions ##
@@ -131,12 +135,22 @@ def exportPlaylists(playlists, library):
             for track in playlist['tracks']:
                 if track['source'] == '2':
                     trackinfo = track['track']
-                    file.write("\"" + trackinfo['title'] + '\",\"' + trackinfo['artist'] + '\",\"' + trackinfo['album'] + "\"\n")
+                    if FORMAT == "TYPE2":
+                        file.write(oldifyField(trackinfo['artist']) + ',' + oldifyField(trackinfo['album']) + ',' + oldifyField(trackinfo['title']) + ",\n")
+                    elif FORMAT == "TYPE3":
+                        file.write("\"" + trackinfo['artist'] + '\",\"' + trackinfo['album'] + '\",\"' + trackinfo['title'] + "\",\n")
+                    else:
+                        file.write("\"" + trackinfo['title'] + '\",\"' + trackinfo['artist'] + '\",\"' + trackinfo['album'] + "\"\n")
                 else:
                     match = False
                     for libtrack in library:
                         if libtrack['id'] == track['trackId']:
-                            file.write("\"" + libtrack['title'] + '\",\"' + libtrack['artist'] + '\",\"' + libtrack['album'] + "\"\n")
+                            if FORMAT == "TYPE2":
+                                file.write(oldifyField(libtrack['artist']) + ',' + oldifyField(libtrack['album']) + ',' + oldifyField(libtrack['title']) + ",\n")
+                            elif FORMAT == "TYPE3":
+                                file.write("\"" + libtrack['artist'] + '\",\"' + libtrack['album'] + '\",\"' + libtrack['title'] + "\",\n")
+                            else:
+                                file.write("\"" + libtrack['title'] + '\",\"' + libtrack['artist'] + '\",\"' + libtrack['album'] + "\"\n")
                             match = True
 
                     if not match:
@@ -154,6 +168,12 @@ def cleanName(name):
     return re.sub('[/\\:*?"<>|]', '', name).encode('ascii', 'ignore').decode("utf-8")
     # translation_table = dict.fromkeys(map(ord, '!@#$'), None)
     # return name.translate(translation_table)
+
+def oldifyField(field):
+    if ',' in field:
+        return ('\"' + field.__str__() + '\"')
+    else:
+        return field
 
 ## ------------------ MAIN ------------------ ##
 
